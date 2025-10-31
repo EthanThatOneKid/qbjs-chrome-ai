@@ -52,6 +52,13 @@ export function render(list: ChatMessage[]): void {
     listEl.appendChild(li);
   }
   listEl.scrollTop = listEl.scrollHeight;
+
+  const clearBtn = document.getElementById("clear-messages") as
+    | HTMLButtonElement
+    | null;
+  if (clearBtn) {
+    clearBtn.disabled = list.length === 0;
+  }
 }
 
 export function addLoadingMessage(): HTMLLIElement {
