@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"]
+  },
   "tasks": {
     "download": {
       "description": "Download the samples",

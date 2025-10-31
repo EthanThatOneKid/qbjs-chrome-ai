@@ -39,6 +39,25 @@
       #messages li[data-role="system"] {
         background: rgba(128, 128, 128, 0.15);
       }
+      #messages li[data-role="loading"] {
+        background: rgba(128, 128, 128, 0.15);
+      }
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(0, 0, 0, 0.3);
+        border-top-color: rgba(0, 0, 0, 0.7);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
       .row {
         display: flex;
         gap: 0.5rem;

@@ -24,7 +24,9 @@ function ensureToken(): string {
   let token = getToken();
   if (!token) {
     // Uses window.prompt per MDN guidance: https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt
-    token = window.prompt("Enter your trial token:")?.trim() || "";
+    token = globalThis.prompt(
+      "Enter your trial token (get one at: https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313):",
+    )?.trim() || "";
     if (token) {
       try {
         localStorage.setItem(STORAGE_KEYS.token, token);
@@ -51,17 +53,43 @@ function saveMessages(list: ChatMessage[]): void {
   }
 }
 
+function renderMessage(
+  li: HTMLLIElement,
+  message: ChatMessage | { role: "loading" },
+): void {
+  li.setAttribute("data-role", message.role);
+  if (message.role === "loading") {
+    const spinner = document.createElement("span");
+    spinner.className = "spinner";
+    spinner.setAttribute("aria-hidden", "true");
+    li.appendChild(spinner);
+    const text = document.createTextNode("Thinking...");
+    li.appendChild(text);
+  } else {
+    li.textContent = message.text;
+  }
+}
+
 function render(list: ChatMessage[]): void {
   const listEl = document.getElementById("messages") as HTMLOListElement | null;
   if (!listEl) return;
   listEl.innerHTML = "";
   for (const m of list) {
     const li = document.createElement("li");
-    li.textContent = m.text;
-    li.setAttribute("data-role", m.role);
+    renderMessage(li, m);
     listEl.appendChild(li);
   }
   listEl.scrollTop = listEl.scrollHeight;
+}
+
+function addLoadingMessage(): HTMLLIElement {
+  const listEl = document.getElementById("messages") as HTMLOListElement | null;
+  if (!listEl) throw new Error("Messages list not found");
+  const li = document.createElement("li");
+  renderMessage(li, { role: "loading" });
+  listEl.appendChild(li);
+  listEl.scrollTop = listEl.scrollHeight;
+  return li;
 }
 
 function setup(): void {
@@ -91,17 +119,33 @@ function setup(): void {
         ts: Date.now(),
       };
       messages.push(userMsg);
-
-      const systemMsg: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "system",
-        text: SYSTEM_REPLY,
-        ts: Date.now(),
-      };
-      messages.push(systemMsg);
-
       saveMessages(messages);
       render(messages);
+
+      const loadingLi = addLoadingMessage();
+
+      setTimeout(() => {
+        const systemMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "system",
+          text: SYSTEM_REPLY,
+          ts: Date.now(),
+        };
+        messages.push(systemMsg);
+        saveMessages(messages);
+
+        loadingLi.setAttribute("data-role", "system");
+        loadingLi.innerHTML = "";
+        loadingLi.textContent = systemMsg.text;
+
+        const listEl = document.getElementById("messages") as
+          | HTMLOListElement
+          | null;
+        if (listEl) {
+          listEl.scrollTop = listEl.scrollHeight;
+        }
+      }, 2000);
+
       input.value = "";
       input.focus();
     });
@@ -110,8 +154,10 @@ function setup(): void {
   if (changeBtn) {
     changeBtn.addEventListener("click", () => {
       const existing = getToken() || "";
-      const updated =
-        window.prompt("Update your trial token:", existing)?.trim() || "";
+      const updated = globalThis.prompt(
+        "Update your trial token (learn more: https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313):",
+        existing,
+      )?.trim() || "";
       if (updated) {
         try {
           localStorage.setItem(STORAGE_KEYS.token, updated);
