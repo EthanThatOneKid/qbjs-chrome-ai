@@ -15,8 +15,6 @@ export function renderMessage(
     const text = document.createTextNode("Thinking...");
     li.appendChild(text);
   } else if ((message as ChatMessage).role === "error") {
-    li.style.background = "rgba(255, 0, 0, 0.15)";
-    li.style.color = "rgb(204, 0, 0)";
     li.textContent = `Error: ${(message as ChatMessage).text}`;
   } else if ((message as ChatMessage).role === "system") {
     const wrapper = document.createElement("div");
@@ -38,9 +36,6 @@ export function renderMessage(
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.textContent = "Open in QBJS IDE";
-    link.style.display = "block";
-    link.style.marginTop = "0.5rem";
-    link.style.color = "inherit";
     li.appendChild(link);
   } else {
     li.textContent = (message as ChatMessage).text;

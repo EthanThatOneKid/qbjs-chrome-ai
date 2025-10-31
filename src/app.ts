@@ -103,9 +103,6 @@ function setup(): void {
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "Open in QBJS IDE";
-        link.style.display = "block";
-        link.style.marginTop = "0.5rem";
-        link.style.color = "inherit";
         loadingLi.appendChild(link);
 
         const listEl = document.getElementById("messages") as
@@ -128,8 +125,6 @@ function setup(): void {
         loadingLi.setAttribute("data-role", "error");
         loadingLi.innerHTML = "";
         loadingLi.textContent = `Error: ${errorMsg.text}`;
-        loadingLi.style.background = "rgba(255, 0, 0, 0.15)";
-        loadingLi.style.color = "rgb(204, 0, 0)";
 
         const listEl = document.getElementById("messages") as
           | HTMLOListElement
