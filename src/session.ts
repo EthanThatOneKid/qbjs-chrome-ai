@@ -1,4 +1,5 @@
 import "./language-model.d.ts";
+import type { FewShotSample } from "./program.ts";
 
 // System prompt to guide QBJS code generation
 export const SYSTEM_PROMPT =
@@ -25,6 +26,66 @@ export const codeResponseSchema = {
   required: ["code"],
 } as const;
 
+// Load few-shot samples from samples.json
+async function loadFewShotSamples(): Promise<FewShotSample[]> {
+  try {
+    // Try multiple paths to find samples.json
+    // First try relative to current location (for bundled code in dist/)
+    let response = await fetch("./samples.json");
+
+    // If that fails, try src/ path (for development)
+    if (!response.ok) {
+      response = await fetch("./src/samples.json");
+    }
+
+    // If that also fails, try from root
+    if (!response.ok) {
+      response = await fetch("/src/samples.json");
+    }
+
+    if (!response.ok) {
+      console.warn("Could not load few-shot samples:", response.statusText);
+      return [];
+    }
+
+    const samples: FewShotSample[] = await response.json();
+    return Array.isArray(samples) ? samples : [];
+  } catch (error) {
+    console.warn("Error loading few-shot samples:", error);
+    return [];
+  }
+}
+
+// Convert few-shot samples to initialPrompts format
+function formatFewShotExamples(
+  samples: FewShotSample[],
+): Array<{ role: string; content: string }> {
+  const examples: Array<{ role: string; content: string }> = [];
+
+  // Limit to a reasonable number of examples to stay within token limits
+  // Using up to 12 examples based on the few-shot.ts script default
+  const maxExamples = Math.min(12, samples.length);
+
+  for (let i = 0; i < maxExamples; i++) {
+    const sample = samples[i];
+    if (!sample?.input || !sample?.output) continue;
+
+    // Add user message
+    examples.push({
+      role: "user",
+      content: sample.input,
+    });
+
+    // Add model response formatted as JSON (matching structured output format)
+    examples.push({
+      role: "model",
+      content: JSON.stringify({ code: sample.output }),
+    });
+  }
+
+  return examples;
+}
+
 // Session management
 let session: LanguageModelSession | null = null;
 
@@ -41,14 +102,22 @@ export async function initializeSession(): Promise<LanguageModelSession> {
     );
   }
 
-  // Create session with system prompt
+  // Load few-shot samples and format them as initial prompts
+  const samples = await loadFewShotSamples();
+  const fewShotExamples = formatFewShotExamples(samples);
+
+  // Create initial prompts array: system prompt + few-shot examples
+  const initialPrompts: Array<{ role: string; content: string }> = [
+    {
+      role: "system",
+      content: SYSTEM_PROMPT,
+    },
+    ...fewShotExamples,
+  ];
+
+  // Create session with system prompt and few-shot examples
   session = await LanguageModel.create({
-    initialPrompts: [
-      {
-        role: "system",
-        content: SYSTEM_PROMPT,
-      },
-    ],
+    initialPrompts,
     monitor(m) {
       m.addEventListener("downloadprogress", (e: { progress?: number }) => {
         const progress = e.progress;

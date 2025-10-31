@@ -24,6 +24,8 @@
   },
   "exclude": ["dist"],
   "imports": {
+    "@std/cli": "jsr:@std/cli@^1.0.23",
+    "@std/csv": "jsr:@std/csv@^1.0.6",
     "lzutf8": "npm:lzutf8@^0.6.3"
   }
 }
