@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "download": {
+      "description": "Download the samples",
+      "command": "deno run --allow-read --allow-write --allow-net few-shot.ts"
+    },
+    "generate": {
+      "description": "Bundle the client-side app",
+      "command": "deno bundle --outdir=dist --platform=browser index.html"
+    },
+    "start": {
+      "description": "Start the project",
+      "command": "deno -A jsr:@std/http/file-server dist",
+      "dependencies": ["generate"]
+    },
+    "precommit": {
+      "description": "Check the code",
+      "command": "deno check",
+      "dependencies": ["generate"]
+    }
+  },
+  "exclude": ["dist"]
+}
