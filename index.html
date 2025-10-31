@@ -4,9 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatQBJS</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        padding: 1rem;
+      }
+      #app {
+        max-width: 720px;
+        margin: 0 auto;
+        display: grid;
+        gap: 0.75rem;
+      }
+      #messages {
+        height: 300px;
+        overflow-y: auto;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        list-style: none;
+        margin: 0;
+      }
+      #messages li {
+        padding: 0.375rem 0.5rem;
+        border-radius: 6px;
+        margin: 0.25rem 0;
+      }
+      #messages li[data-role="user"] {
+        background: rgba(0, 120, 212, 0.15);
+      }
+      #messages li[data-role="system"] {
+        background: rgba(128, 128, 128, 0.15);
+      }
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 0.5rem 0.75rem;
+      }
+    </style>
   </head>
   <body>
     <h1>ChatQBJS</h1>
+    <main id="app">
+      <noscript>
+        JavaScript is off. You can still type, but messages will not persist.
+      </noscript>
+      <section aria-label="Messages">
+        <ol
+          id="messages"
+          aria-live="polite"
+          aria-relevant="additions"
+          tabindex="0"
+        >
+        </ol>
+      </section>
+      <form id="chat-form">
+        <label for="input">Your message</label>
+        <textarea id="input" name="message" rows="3" required></textarea>
+        <div class="row">
+          <button id="send" type="submit">Send</button>
+          <button id="change-token" type="button">Change token</button>
+          <button id="clear-messages" type="button">Clear messages</button>
+        </div>
+      </form>
+    </main>
     <script type="module" src="./src/app.ts"></script>
   </body>
 </html>
