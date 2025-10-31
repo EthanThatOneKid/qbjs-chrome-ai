@@ -1,3 +1,5 @@
+import { compileQbjsUrl } from "./qbjs.ts";
+
 interface ChatMessage {
   id: string;
   role: "user" | "system";
@@ -10,7 +12,7 @@ const STORAGE_KEYS = {
   token: "trialToken",
 } as const;
 
-const SYSTEM_REPLY = "Thank you for your message!";
+const SYSTEM_REPLY_CODE = 'Print "Hello world"';
 
 function getToken(): string | null {
   try {
@@ -65,8 +67,22 @@ function renderMessage(
     li.appendChild(spinner);
     const text = document.createTextNode("Thinking...");
     li.appendChild(text);
+  } else if ((message as ChatMessage).role === "system") {
+    const wrapper = document.createElement("div");
+    wrapper.className = "iframe-wrapper";
+    const iframe = document.createElement("iframe");
+    iframe.width = "656";
+    iframe.height = "416";
+    const code = (message as ChatMessage).text || SYSTEM_REPLY_CODE;
+    iframe.src = compileQbjsUrl(code, "auto");
+    iframe.setAttribute("loading", "lazy");
+    iframe.setAttribute("referrerpolicy", "no-referrer");
+    iframe.setAttribute("scrolling", "no");
+    iframe.setAttribute("title", "QBJS preview");
+    wrapper.appendChild(iframe);
+    li.appendChild(wrapper);
   } else {
-    li.textContent = message.text;
+    li.textContent = (message as ChatMessage).text;
   }
 }
 
@@ -128,7 +144,7 @@ function setup(): void {
         const systemMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: "system",
-          text: SYSTEM_REPLY,
+          text: SYSTEM_REPLY_CODE,
           ts: Date.now(),
         };
         messages.push(systemMsg);
@@ -136,7 +152,18 @@ function setup(): void {
 
         loadingLi.setAttribute("data-role", "system");
         loadingLi.innerHTML = "";
-        loadingLi.textContent = systemMsg.text;
+        const wrapper = document.createElement("div");
+        wrapper.className = "iframe-wrapper";
+        const iframe = document.createElement("iframe");
+        iframe.width = "656";
+        iframe.height = "416";
+        iframe.src = compileQbjsUrl(systemMsg.text, "auto");
+        iframe.setAttribute("loading", "lazy");
+        iframe.setAttribute("referrerpolicy", "no-referrer");
+        iframe.setAttribute("scrolling", "no");
+        iframe.setAttribute("title", "QBJS preview");
+        wrapper.appendChild(iframe);
+        loadingLi.appendChild(wrapper);
 
         const listEl = document.getElementById("messages") as
           | HTMLOListElement

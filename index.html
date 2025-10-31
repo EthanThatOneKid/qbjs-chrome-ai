@@ -13,14 +13,20 @@
         font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
         padding: 1rem;
       }
+      h1 {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+      }
       #app {
         max-width: 720px;
         margin: 0 auto;
         display: grid;
         gap: 0.75rem;
+        width: 100%;
       }
       #messages {
-        height: 300px;
+        height: 66vh;
         overflow-y: auto;
         border: 1px solid rgba(0, 0, 0, 0.2);
         border-radius: 8px;
@@ -35,9 +41,35 @@
       }
       #messages li[data-role="user"] {
         background: rgba(0, 120, 212, 0.15);
+        width: 100%;
+        max-width: 640px;
       }
       #messages li[data-role="system"] {
-        background: rgba(128, 128, 128, 0.15);
+        background: transparent;
+        padding: 0;
+        margin: 0.25rem 0;
+        overflow: hidden;
+        position: relative;
+      }
+      #messages li[data-role="system"] .iframe-wrapper {
+        width: 100%;
+        max-width: 640px;
+        height: 400px;
+        overflow: hidden;
+        position: relative;
+        border-radius: 6px;
+        clip-path: inset(0);
+      }
+      #messages li[data-role="system"] iframe {
+        display: block;
+        width: 656px;
+        height: 416px;
+        border: none;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: -1px;
+        left: -6px;
       }
       #messages li[data-role="loading"] {
         background: rgba(128, 128, 128, 0.15);
@@ -62,8 +94,19 @@
         display: flex;
         gap: 0.5rem;
         align-items: center;
+        width: 100%;
+        box-sizing: border-box;
       }
       textarea {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      form {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      label {
+        display: block;
         width: 100%;
         box-sizing: border-box;
       }

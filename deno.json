@@ -22,5 +22,8 @@
       "dependencies": ["generate"]
     }
   },
-  "exclude": ["dist"]
+  "exclude": ["dist"],
+  "imports": {
+    "lzutf8": "npm:lzutf8@^0.6.3"
+  }
 }
