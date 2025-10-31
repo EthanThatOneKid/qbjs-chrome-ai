@@ -81,6 +81,16 @@ function renderMessage(
     iframe.setAttribute("title", "QBJS preview");
     wrapper.appendChild(iframe);
     li.appendChild(wrapper);
+
+    const link = document.createElement("a");
+    link.href = compileQbjsUrl(code);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Open in QBJS IDE";
+    link.style.display = "block";
+    link.style.marginTop = "0.5rem";
+    link.style.color = "inherit";
+    li.appendChild(link);
   } else {
     li.textContent = (message as ChatMessage).text;
   }
@@ -164,6 +174,16 @@ function setup(): void {
         iframe.setAttribute("title", "QBJS preview");
         wrapper.appendChild(iframe);
         loadingLi.appendChild(wrapper);
+
+        const link = document.createElement("a");
+        link.href = compileQbjsUrl(systemMsg.text);
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open in QBJS IDE";
+        link.style.display = "block";
+        link.style.marginTop = "0.5rem";
+        link.style.color = "inherit";
+        loadingLi.appendChild(link);
 
         const listEl = document.getElementById("messages") as
           | HTMLOListElement
