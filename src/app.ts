@@ -1,140 +1,42 @@
+import type { ChatMessage } from "./types.ts";
 import { compileQbjsUrl } from "./qbjs.ts";
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "system";
-  text: string;
-  ts: number;
-}
-
-const STORAGE_KEYS = {
-  msgs: "chatMessages",
-  token: "trialToken",
-} as const;
-
-const SYSTEM_REPLY_CODE = 'Print "Hello world"';
-
-function getToken(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.token);
-  } catch {
-    return null;
-  }
-}
-
-function ensureToken(): string {
-  let token = getToken();
-  if (!token) {
-    // Uses window.prompt per MDN guidance: https://developer.mozilla.org/en-US/docs/Web/API/Window/prompt
-    token = globalThis.prompt(
-      "Enter your trial token (get one at: https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313):",
-    )?.trim() || "";
-    if (token) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.token, token);
-      } catch { /* ignore */ }
-    }
-  }
-  return token;
-}
-
-function loadMessages(): ChatMessage[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.msgs);
-    return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveMessages(list: ChatMessage[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEYS.msgs, JSON.stringify(list));
-  } catch {
-    // ignore persistence failures
-  }
-}
-
-function renderMessage(
-  li: HTMLLIElement,
-  message: ChatMessage | { role: "loading" },
-): void {
-  li.setAttribute("data-role", message.role);
-  if (message.role === "loading") {
-    const spinner = document.createElement("span");
-    spinner.className = "spinner";
-    spinner.setAttribute("aria-hidden", "true");
-    li.appendChild(spinner);
-    const text = document.createTextNode("Thinking...");
-    li.appendChild(text);
-  } else if ((message as ChatMessage).role === "system") {
-    const wrapper = document.createElement("div");
-    wrapper.className = "iframe-wrapper";
-    const iframe = document.createElement("iframe");
-    iframe.width = "656";
-    iframe.height = "416";
-    const code = (message as ChatMessage).text || SYSTEM_REPLY_CODE;
-    iframe.src = compileQbjsUrl(code, "auto");
-    iframe.setAttribute("loading", "lazy");
-    iframe.setAttribute("referrerpolicy", "no-referrer");
-    iframe.setAttribute("scrolling", "no");
-    iframe.setAttribute("title", "QBJS preview");
-    wrapper.appendChild(iframe);
-    li.appendChild(wrapper);
-
-    const link = document.createElement("a");
-    link.href = compileQbjsUrl(code);
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = "Open in QBJS IDE";
-    link.style.display = "block";
-    link.style.marginTop = "0.5rem";
-    link.style.color = "inherit";
-    li.appendChild(link);
-  } else {
-    li.textContent = (message as ChatMessage).text;
-  }
-}
-
-function render(list: ChatMessage[]): void {
-  const listEl = document.getElementById("messages") as HTMLOListElement | null;
-  if (!listEl) return;
-  listEl.innerHTML = "";
-  for (const m of list) {
-    const li = document.createElement("li");
-    renderMessage(li, m);
-    listEl.appendChild(li);
-  }
-  listEl.scrollTop = listEl.scrollHeight;
-}
-
-function addLoadingMessage(): HTMLLIElement {
-  const listEl = document.getElementById("messages") as HTMLOListElement | null;
-  if (!listEl) throw new Error("Messages list not found");
-  const li = document.createElement("li");
-  renderMessage(li, { role: "loading" });
-  listEl.appendChild(li);
-  listEl.scrollTop = listEl.scrollHeight;
-  return li;
-}
+import { experimentMockReply, SYSTEM_REPLY_CODE } from "./config.ts";
+import {
+  getToken,
+  loadMessages,
+  saveMessages,
+  saveToken,
+  STORAGE_KEYS,
+} from "./storage.ts";
+import { updateOriginTrialMetaTag } from "./origin-trial.ts";
+import { addLoadingMessage, render } from "./render.ts";
+import {
+  codeResponseSchema,
+  destroySession,
+  initializeSession,
+} from "./session.ts";
 
 function setup(): void {
   const form = document.getElementById("chat-form") as HTMLFormElement | null;
   const input = document.getElementById("input") as HTMLTextAreaElement | null;
-  const changeBtn = document.getElementById("change-token") as
-    | HTMLButtonElement
-    | null;
   const clearBtn = document.getElementById("clear-messages") as
     | HTMLButtonElement
     | null;
+  const changeTokenBtn = document.getElementById("change-token") as
+    | HTMLButtonElement
+    | null;
 
-  ensureToken();
+  // Load and set token from storage
+  const savedToken = getToken();
+  if (savedToken) {
+    updateOriginTrialMetaTag(savedToken);
+  }
 
   let messages = loadMessages();
   render(messages);
 
   if (form && input) {
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = input.value.trim();
       if (!text) return;
@@ -149,12 +51,33 @@ function setup(): void {
       render(messages);
 
       const loadingLi = addLoadingMessage();
+      input.value = "";
+      input.focus();
 
-      setTimeout(() => {
+      try {
+        let code: string;
+
+        if (experimentMockReply) {
+          // Mock response mode
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          code = SYSTEM_REPLY_CODE;
+        } else {
+          // Real API mode
+          const currentSession = await initializeSession();
+          const response = await currentSession.prompt(text, {
+            responseConstraint: codeResponseSchema,
+          });
+          const parsed = JSON.parse(response);
+          if (typeof parsed.code !== "string") {
+            throw new Error("Invalid response format: missing code field");
+          }
+          code = parsed.code;
+        }
+
         const systemMsg: ChatMessage = {
           id: crypto.randomUUID(),
           role: "system",
-          text: SYSTEM_REPLY_CODE,
+          text: code,
           ts: Date.now(),
         };
         messages.push(systemMsg);
@@ -191,24 +114,29 @@ function setup(): void {
         if (listEl) {
           listEl.scrollTop = listEl.scrollHeight;
         }
-      }, 2000);
+      } catch (error) {
+        // Handle errors
+        const errorMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "error",
+          text: error instanceof Error ? error.message : String(error),
+          ts: Date.now(),
+        };
+        messages.push(errorMsg);
+        saveMessages(messages);
 
-      input.value = "";
-      input.focus();
-    });
-  }
+        loadingLi.setAttribute("data-role", "error");
+        loadingLi.innerHTML = "";
+        loadingLi.textContent = `Error: ${errorMsg.text}`;
+        loadingLi.style.background = "rgba(255, 0, 0, 0.15)";
+        loadingLi.style.color = "rgb(204, 0, 0)";
 
-  if (changeBtn) {
-    changeBtn.addEventListener("click", () => {
-      const existing = getToken() || "";
-      const updated = globalThis.prompt(
-        "Update your trial token (learn more: https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313):",
-        existing,
-      )?.trim() || "";
-      if (updated) {
-        try {
-          localStorage.setItem(STORAGE_KEYS.token, updated);
-        } catch { /* ignore */ }
+        const listEl = document.getElementById("messages") as
+          | HTMLOListElement
+          | null;
+        if (listEl) {
+          listEl.scrollTop = listEl.scrollHeight;
+        }
       }
     });
   }
@@ -222,6 +150,39 @@ function setup(): void {
       render(messages);
     });
   }
+
+  if (changeTokenBtn) {
+    changeTokenBtn.addEventListener("click", () => {
+      const existing = getToken() || "";
+      const updated = globalThis.prompt(
+        "Enter your origin trial token (get one at: https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313):",
+        existing,
+      )?.trim() || "";
+      if (updated) {
+        saveToken(updated);
+        updateOriginTrialMetaTag(updated);
+        alert(
+          "Trial token updated. Please reload the page for changes to take effect.",
+        );
+      } else if (existing) {
+        // User cleared the token
+        saveToken("");
+        updateOriginTrialMetaTag(null);
+        alert(
+          "Trial token removed. Please reload the page for changes to take effect.",
+        );
+      }
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", setup);
+
+// Clean up session on page unload
+globalThis.addEventListener("beforeunload", () => {
+  destroySession();
+});
+
+globalThis.addEventListener("pagehide", () => {
+  destroySession();
+});
