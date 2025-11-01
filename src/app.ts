@@ -15,6 +15,83 @@ import {
   destroySession,
   initializeSession,
 } from "./session.ts";
+import type { FewShotSample } from "./types.ts";
+import fewShotSamples from "./samples.json" with { type: "json" };
+
+/**
+ * Get 4 random samples for suggestions
+ */
+function getRandomSuggestions(count: number = 4): FewShotSample[] {
+  const samples = fewShotSamples as FewShotSample[];
+  const shuffled = [...samples].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+/**
+ * Add sample directly to message history without AI generation
+ */
+function addSampleToHistory(
+  sample: FewShotSample,
+  messages: ChatMessage[],
+): ChatMessage[] {
+  // Add user message with description
+  const userMsg: ChatMessage = {
+    id: crypto.randomUUID(),
+    role: "user",
+    text: sample.description,
+    ts: Date.now(),
+  };
+  messages.push(userMsg);
+
+  // Add system message with code directly
+  const systemMsg: ChatMessage = {
+    id: crypto.randomUUID(),
+    role: "system",
+    text: sample.code,
+    ts: Date.now(),
+  };
+  messages.push(systemMsg);
+
+  saveMessages(messages);
+  render(messages);
+
+  return messages;
+}
+
+/**
+ * Render suggestion prompts in a 2x2 grid when there are no messages
+ */
+function renderSuggestions(
+  messages: ChatMessage[],
+  onSampleSelect: (sample: FewShotSample) => void,
+): void {
+  const suggestionsContainer = document.getElementById(
+    "suggestions-container",
+  ) as HTMLDivElement | null;
+  if (!suggestionsContainer) return;
+
+  if (messages.length === 0) {
+    const suggestions = getRandomSuggestions(4);
+    suggestionsContainer.innerHTML = "";
+    suggestionsContainer.style.display = "grid";
+    suggestionsContainer.style.gridTemplateColumns = "1fr 1fr";
+    suggestionsContainer.style.gap = "0.75rem";
+
+    suggestions.forEach((sample) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "suggestion-button";
+      button.textContent = sample.description;
+      button.addEventListener("click", () => {
+        onSampleSelect(sample);
+      });
+      suggestionsContainer.appendChild(button);
+    });
+  } else {
+    suggestionsContainer.innerHTML = "";
+    suggestionsContainer.style.display = "none";
+  }
+}
 
 function setup(): void {
   const form = document.getElementById("chat-form") as HTMLFormElement | null;
@@ -33,7 +110,15 @@ function setup(): void {
   }
 
   let messages = loadMessages();
+  
+  // Create callback that updates messages and re-renders suggestions
+  const handleSampleSelect = (sample: FewShotSample) => {
+    messages = addSampleToHistory(sample, messages);
+    renderSuggestions(messages, handleSampleSelect);
+  };
+  
   render(messages);
+  renderSuggestions(messages, handleSampleSelect);
 
   if (form && input) {
     form.addEventListener("submit", async (e) => {
@@ -49,10 +134,18 @@ function setup(): void {
       messages.push(userMsg);
       saveMessages(messages);
       render(messages);
+      renderSuggestions(messages, handleSampleSelect);
 
-      const loadingLi = addLoadingMessage();
+      const startTime = Date.now();
+      const { element: loadingLi, updateElapsedTime } = addLoadingMessage();
       input.value = "";
       input.focus();
+
+      // Start updating elapsed time every 100ms
+      const intervalId = globalThis.setInterval(() => {
+        const elapsedSeconds = (Date.now() - startTime) / 1000;
+        updateElapsedTime(elapsedSeconds);
+      }, 100);
 
       try {
         let code: string;
@@ -83,6 +176,11 @@ function setup(): void {
             await destroySession(currentSession);
           }
         }
+
+        // Clear the interval and show final elapsed time
+        globalThis.clearInterval(intervalId);
+        const finalElapsedSeconds = (Date.now() - startTime) / 1000;
+        updateElapsedTime(finalElapsedSeconds);
 
         const systemMsg: ChatMessage = {
           id: crypto.randomUUID(),
@@ -122,6 +220,9 @@ function setup(): void {
           listEl.scrollTop = listEl.scrollHeight;
         }
       } catch (error) {
+        // Clear the interval on error
+        globalThis.clearInterval(intervalId);
+
         // Handle errors
         const errorMsg: ChatMessage = {
           id: crypto.randomUUID(),
@@ -153,6 +254,7 @@ function setup(): void {
         localStorage.removeItem(STORAGE_KEYS.msgs);
       } catch { /* ignore */ }
       render(messages);
+      renderSuggestions(messages, handleSampleSelect);
     });
   }
 

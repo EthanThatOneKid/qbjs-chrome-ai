@@ -12,8 +12,23 @@ export function renderMessage(
     spinner.className = "spinner";
     spinner.setAttribute("aria-hidden", "true");
     li.appendChild(spinner);
+    
+    const textContainer = document.createElement("span");
+    textContainer.style.display = "flex";
+    textContainer.style.justifyContent = "center";
+    textContainer.style.alignItems = "center";
+    textContainer.style.gap = "0.5rem";
+    textContainer.style.width = "100%";
+    
     const text = document.createTextNode("Thinking...");
-    li.appendChild(text);
+    textContainer.appendChild(text);
+    
+    const timeSpan = document.createElement("span");
+    timeSpan.style.opacity = "0.7";
+    timeSpan.className = "loading-time";
+    textContainer.appendChild(timeSpan);
+    
+    li.appendChild(textContainer);
   } else if ((message as ChatMessage).role === "error") {
     li.textContent = `Error: ${(message as ChatMessage).text}`;
   } else if ((message as ChatMessage).role === "system") {
@@ -61,12 +76,27 @@ export function render(list: ChatMessage[]): void {
   }
 }
 
-export function addLoadingMessage(): HTMLLIElement {
+export function addLoadingMessage(): {
+  element: HTMLLIElement;
+  updateElapsedTime: (elapsedSeconds: number) => void;
+} {
   const listEl = document.getElementById("messages") as HTMLOListElement | null;
   if (!listEl) throw new Error("Messages list not found");
   const li = document.createElement("li");
   renderMessage(li, { role: "loading" });
   listEl.appendChild(li);
   listEl.scrollTop = listEl.scrollHeight;
-  return li;
+
+  const timeSpan = li.querySelector(".loading-time") as HTMLSpanElement | null;
+
+  const updateElapsedTime = (elapsedSeconds: number) => {
+    if (timeSpan) {
+      timeSpan.textContent = `${elapsedSeconds.toFixed(1)}s`;
+    }
+  };
+
+  return {
+    element: li,
+    updateElapsedTime,
+  };
 }
