@@ -2,9 +2,13 @@ import type { ChatMessage } from "./types.ts";
 import { compileQbjsUrl } from "./qbjs.ts";
 import { experimentMockReply, SYSTEM_REPLY_CODE } from "./config.ts";
 import {
+  getApiKey,
+  getModelPreference,
   getToken,
   loadMessages,
+  saveApiKey,
   saveMessages,
+  saveModelPreference,
   saveToken,
   STORAGE_KEYS,
 } from "./storage.ts";
@@ -15,8 +19,14 @@ import {
   destroySession,
   initializeSession,
 } from "./session.ts";
+import {
+  generateRemoteResponse,
+  initializeRemoteSession,
+} from "./remote-session.ts";
 import type { FewShotSample } from "./types.ts";
 import fewShotSamples from "./samples.json" with { type: "json" };
+
+let useRemoteModel = false;
 
 /**
  * Get 4 random samples for suggestions
@@ -99,7 +109,16 @@ function setup(): void {
   const clearBtn = document.getElementById("clear-messages") as
     | HTMLButtonElement
     | null;
-  const changeTokenBtn = document.getElementById("change-token") as
+  const settingsBtn = document.getElementById("settings-btn") as
+    | HTMLButtonElement
+    | null;
+  const settingsDialog = document.getElementById("settings-dialog") as
+    | HTMLDialogElement
+    | null;
+  const settingsForm = document.getElementById("settings-form") as
+    | HTMLFormElement
+    | null;
+  const closeDialogBtn = document.getElementById("close-dialog-btn") as
     | HTMLButtonElement
     | null;
 
@@ -108,6 +127,9 @@ function setup(): void {
   if (savedToken) {
     updateOriginTrialMetaTag(savedToken);
   }
+
+  // Load and set model preference
+  useRemoteModel = getModelPreference() === "remote";
 
   // Show/hide trial token link based on whether token is set
   const trialTokenNotice = document.getElementById("trial-token-notice") as
@@ -162,6 +184,20 @@ function setup(): void {
           // Mock response mode
           await new Promise((resolve) => setTimeout(resolve, 2000));
           code = SYSTEM_REPLY_CODE;
+        } else if (useRemoteModel) {
+          // Remote API mode
+          const apiKey = getApiKey();
+          if (!apiKey) {
+            alert("API key is not set. Please set it.");
+            return;
+          }
+          const conversationHistory = messages.slice(0, -1);
+          const remoteSession = initializeRemoteSession(apiKey);
+          code = await generateRemoteResponse(
+            remoteSession,
+            text,
+            conversationHistory,
+          );
         } else {
           // Real API mode
           // Pass conversation history excluding the current user message we just added
@@ -266,41 +302,42 @@ function setup(): void {
     });
   }
 
-  if (changeTokenBtn) {
-    changeTokenBtn.addEventListener("click", () => {
-      const existing = getToken() || "";
-      const updated = globalThis.prompt(
-        "Enter your origin trial token (get one at: https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313):",
-        existing,
-      )?.trim() || "";
-      if (updated) {
-        saveToken(updated);
-        updateOriginTrialMetaTag(updated);
-        // Hide the trial token link since token is now set
-        const trialTokenNotice = document.getElementById(
-          "trial-token-notice",
-        ) as HTMLElement | null;
-        if (trialTokenNotice) {
-          trialTokenNotice.style.display = "none";
-        }
-        alert(
-          "Trial token updated. Please reload the page for changes to take effect.",
-        );
-      } else if (existing) {
-        // User cleared the token
-        saveToken("");
-        updateOriginTrialMetaTag(null);
-        // Show the trial token link since token was removed
-        const trialTokenNotice = document.getElementById(
-          "trial-token-notice",
-        ) as HTMLElement | null;
-        if (trialTokenNotice) {
-          trialTokenNotice.style.display = "block";
-        }
-        alert(
-          "Trial token removed. Please reload the page for changes to take effect.",
-        );
-      }
+  if (settingsBtn && settingsDialog && settingsForm) {
+    settingsBtn.addEventListener("click", () => {
+      const modelSelect = settingsForm.elements.namedItem("model") as HTMLSelectElement;
+      const apiKeyInput = settingsForm.elements.namedItem("apiKey") as HTMLInputElement;
+      const tokenInput = settingsForm.elements.namedItem("token") as HTMLInputElement;
+
+      modelSelect.value = getModelPreference();
+      apiKeyInput.value = getApiKey() || "";
+      tokenInput.value = getToken() || "";
+
+      settingsDialog.showModal();
+    });
+  }
+
+  if (closeDialogBtn && settingsDialog) {
+    closeDialogBtn.addEventListener("click", () => {
+      settingsDialog.close();
+    });
+  }
+
+  if (settingsForm && settingsDialog) {
+    settingsForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const formData = new FormData(settingsForm);
+      const model = formData.get("model") as "local" | "remote";
+      const apiKey = formData.get("apiKey") as string;
+      const token = formData.get("token") as string;
+
+      useRemoteModel = model === "remote";
+      saveModelPreference(model);
+      saveApiKey(apiKey);
+      saveToken(token);
+      updateOriginTrialMetaTag(token);
+
+      settingsDialog.close();
+      alert("Settings saved.");
     });
   }
 }

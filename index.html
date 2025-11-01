@@ -371,13 +371,31 @@
         </div>
         <div class="row">
           <button id="send" type="submit">Send</button>
-          <button id="change-token" type="button">Change token</button>
           <button id="clear-messages" type="button" disabled>
             Clear messages
           </button>
+          <button id="settings-btn" type="button">Settings</button>
         </div>
       </form>
     </main>
+    <dialog id="settings-dialog">
+      <form id="settings-form">
+        <h2>Settings</h2>
+        <label for="model-select">AI Model</label>
+        <select id="model-select" name="model">
+          <option value="local">Local</option>
+          <option value="remote">Remote</option>
+        </select>
+        <label for="api-key-input">API Key</label>
+        <input type="password" id="api-key-input" name="apiKey">
+        <label for="token-input">Origin Trial Token</label>
+        <input type="password" id="token-input" name="token">
+        <div class="row">
+          <button type="submit">Save</button>
+          <button type="button" id="close-dialog-btn">Close</button>
+        </div>
+      </form>
+    </dialog>
     <script type="module" src="./src/app.ts"></script>
   </body>
 </html>

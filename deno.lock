@@ -7,6 +7,7 @@
     "jsr:@std/csv@^1.0.6": "1.0.6",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/streams@^1.0.9": "1.0.13",
+    "npm:@google/generative-ai@0.15": "0.15.0",
     "npm:@orama/orama@^3.1.16": "3.1.16",
     "npm:lzutf8@~0.6.3": "0.6.3"
   },
@@ -37,6 +38,9 @@
     }
   },
   "npm": {
+    "@google/generative-ai@0.15.0": {
+      "integrity": "sha512-zs37judcTYFJf1U7tnuqnh7gdzF6dcWj9pNRxjA5JTONRoiQ0htrRdbefRFiewOIfXwhun5t9hbd2ray7812eQ=="
+    },
     "@orama/orama@3.1.16": {
       "integrity": "sha512-scSmQBD8eANlMUOglxHrN1JdSW8tDghsPuS83otqealBiIeMukCQMOf/wc0JJjDXomqwNdEQFLXLGHrU6PGxuA=="
     },
@@ -99,6 +103,7 @@
       "jsr:@std/assert@^1.0.15",
       "jsr:@std/cli@^1.0.23",
       "jsr:@std/csv@^1.0.6",
+      "npm:@google/generative-ai@0.15",
       "npm:@orama/orama@^3.1.16",
       "npm:lzutf8@~0.6.3"
     ]
