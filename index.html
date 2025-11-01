@@ -85,8 +85,11 @@
         box-shadow: var(--shadow-subtle);
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
+      }
+      #messages:empty {
+        justify-content: center;
       }
       #messages:empty::before {
         content: "Try a suggested message above or type your own!";
@@ -121,6 +124,7 @@
         line-height: 1.6;
         border: 1px solid var(--ide-border);
         color: var(--ide-text);
+        flex-shrink: 0;
       }
       #messages li[data-role="system"] {
         background: transparent;
@@ -131,17 +135,20 @@
         max-width: 640px;
         display: flex;
         flex-direction: column;
+        flex-shrink: 0;
       }
       #messages li[data-role="system"] .iframe-wrapper {
         width: 100%;
         max-width: 640px;
         height: 400px;
+        min-height: 400px;
         overflow: hidden;
         position: relative;
         border-radius: 12px;
         clip-path: inset(0);
         border: 0.5px solid var(--border-color);
         box-shadow: var(--shadow-subtle);
+        flex-shrink: 0;
       }
       #messages li[data-role="system"] iframe {
         display: block;
@@ -159,11 +166,13 @@
         padding: 1rem 1.25rem;
         border: 1px solid var(--ide-border);
         color: var(--ide-text);
+        flex-shrink: 0;
       }
       #messages li[data-role="error"] {
         background: rgba(255, 68, 68, 0.15);
         color: var(--ide-number);
         border: 1px solid rgba(255, 68, 68, 0.3);
+        flex-shrink: 0;
       }
       .spinner {
         display: inline-block;
