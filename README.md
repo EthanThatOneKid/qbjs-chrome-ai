@@ -1,5 +1,7 @@
 # ChatQBJS
 
+[![Devpost badge](https://img.shields.io/badge/Devpost-003E54)](https://devpost.com/software/chatqbjs)
+
 ChatQBJS is a conversational AI agent for [qbjs.org](https://qbjs.org/). QBJS is
 a web-based BASIC implementation with QBasic/[QB64](https://qb64.com/)
 compatibility, multimedia support, and easy program sharing.
