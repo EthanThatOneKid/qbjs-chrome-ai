@@ -39,8 +39,6 @@ export function renderMessage(
     const wrapper = document.createElement("div");
     wrapper.className = "iframe-wrapper";
     const iframe = document.createElement("iframe");
-    iframe.width = "656";
-    iframe.height = "416";
     const code = (message as ChatMessage).text || SYSTEM_REPLY_CODE;
     iframe.src = compileQbjsUrl(code, "auto");
     iframe.setAttribute("loading", "lazy");

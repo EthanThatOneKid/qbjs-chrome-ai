@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatQBJS</title>
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="https://www.qbjs.org/favicon.ico"
+    >
     <style>
       :root {
         color-scheme: dark;
@@ -132,16 +137,17 @@
         margin: 0.75rem 0;
         overflow: hidden;
         position: relative;
-        max-width: 640px;
+        width: 100%;
+        max-width: 100%;
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
       }
       #messages li[data-role="system"] .iframe-wrapper {
         width: 100%;
-        max-width: 640px;
-        height: 400px;
-        min-height: 400px;
+        max-width: 100%;
+        aspect-ratio: 656 / 416;
+        min-height: 300px;
         overflow: hidden;
         position: relative;
         border-radius: 12px;
@@ -152,11 +158,14 @@
       }
       #messages li[data-role="system"] iframe {
         display: block;
-        width: 656px;
-        height: 416px;
+        width: 100%;
+        height: 100%;
         margin: 0;
         padding: 0;
         position: absolute;
+        top: 0;
+        left: 0;
+        border: none;
       }
       #messages li[data-role="loading"] {
         background: var(--loading-bg);

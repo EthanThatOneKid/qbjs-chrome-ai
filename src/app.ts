@@ -240,8 +240,6 @@ function setup(): void {
         const wrapper = document.createElement("div");
         wrapper.className = "iframe-wrapper";
         const iframe = document.createElement("iframe");
-        iframe.width = "656";
-        iframe.height = "416";
         iframe.src = compileQbjsUrl(systemMsg.text, "auto");
         iframe.setAttribute("loading", "lazy");
         iframe.setAttribute("referrerpolicy", "no-referrer");
