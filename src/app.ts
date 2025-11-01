@@ -131,14 +131,6 @@ function setup(): void {
   // Load and set model preference
   useRemoteModel = getModelPreference() === "remote";
 
-  // Show/hide trial token link based on whether token is set
-  const trialTokenNotice = document.getElementById("trial-token-notice") as
-    | HTMLElement
-    | null;
-  if (trialTokenNotice) {
-    trialTokenNotice.style.display = savedToken ? "none" : "block";
-  }
-
   let messages = loadMessages();
 
   // Create callback that updates messages and re-renders suggestions
