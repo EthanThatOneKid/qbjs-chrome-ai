@@ -1,9 +1,22 @@
 import { create, insert, search } from "@orama/orama";
 import type { FewShotSample } from "./types.ts";
 
+// Define the schema definition
+const schemaDefinition = {
+  schema: {
+    description: "string",
+    code: "string",
+  },
+} as const;
+
+// Infer the database type from the actual create call
+function createDatabase() {
+  return create(schemaDefinition);
+}
+type OramaDatabase = ReturnType<typeof createDatabase>;
+
 // Cached Orama database instance
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let cachedDB: any = null;
+let cachedDB: OramaDatabase | null = null;
 let cachedSamplesHash: string = "";
 
 /**
@@ -19,8 +32,7 @@ function hashSamples(samples: FewShotSample[]): string {
  * Initialize or get cached Orama database with samples indexed
  * Note: All Orama operations are sync in v3.0+
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getOrCreateDatabase(samples: FewShotSample[]): any {
+function getOrCreateDatabase(samples: FewShotSample[]): OramaDatabase {
   const samplesHash = hashSamples(samples);
 
   // Return cached database if samples haven't changed
@@ -29,12 +41,7 @@ function getOrCreateDatabase(samples: FewShotSample[]): any {
   }
 
   // Create new database
-  const db = create({
-    schema: {
-      description: "string", // Description/prompt
-      code: "string", // Code
-    },
-  });
+  const db = create(schemaDefinition);
 
   // Index all samples (insert is sync in Orama 3.0+)
   for (const sample of samples) {

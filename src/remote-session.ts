@@ -1,27 +1,20 @@
-import {
-  GenerationConfig,
-  GenerativeModel,
-  GoogleGenerativeAI,
-  HarmBlockThreshold,
-  HarmCategory,
-  SafetySetting,
-} from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import type { ChatMessage } from "./types.ts";
 import { SYSTEM_PROMPT } from "./session.ts";
 
 // Function to initialize the remote session with the API key
 export function initializeRemoteSession(apiKey: string) {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-  return model;
+  return new GoogleGenAI({ apiKey });
 }
 
 // Format conversation history for the remote API
 function formatRemoteConversationHistory(
   messages: ChatMessage[],
   maxHistoryPairs: number = 10,
-): { role: string; parts: { text: string }[] }[] {
-  const history: { role: string; parts: { text: string }[] }[] = [];
+): Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> {
+  const history: Array<
+    { role: "user" | "model"; parts: Array<{ text: string }> }
+  > = [];
   const recentMessages = messages.slice(-maxHistoryPairs * 2);
 
   for (const msg of recentMessages) {
@@ -36,36 +29,48 @@ function formatRemoteConversationHistory(
 
 // Function to generate a response from the remote API
 export async function generateRemoteResponse(
-  model: GenerativeModel,
+  ai: GoogleGenAI,
   userPrompt: string,
   conversationHistory: ChatMessage[],
-) {
-  const generationConfig: GenerationConfig = {
-    temperature: 0.7,
-    topP: 1,
-    topK: 1,
-    maxOutputTokens: 8192,
-    responseMimeType: "text/plain",
-  };
+): Promise<string> {
+  // Build contents array with conversation history and current user prompt
+  // The system prompt is included in the first message to establish context
+  const formattedHistory = formatRemoteConversationHistory(conversationHistory);
+  const contents: Array<
+    { role: "user" | "model"; parts: Array<{ text: string }> }
+  > = [];
 
-  const safetySettings: SafetySetting[] = [
-    {
-      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  if (formattedHistory.length === 0) {
+    // First message: prepend system prompt to establish the assistant's role
+    contents.push({
+      role: "user",
+      parts: [{
+        text:
+          `${SYSTEM_PROMPT}\n\nNow, please generate QBJS code for: ${userPrompt}`,
+      }],
+    });
+  } else {
+    // Continuing conversation: add history and current prompt
+    // System prompt context is maintained through conversation history
+    contents.push(...formattedHistory);
+    contents.push({ role: "user", parts: [{ text: userPrompt }] });
+  }
+
+  // Use models.generateContent with full conversation history
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents,
+    config: {
+      temperature: 0.7,
+      topP: 1,
+      topK: 1,
+      maxOutputTokens: 8192,
+      responseMimeType: "text/plain",
     },
-    // ... other safety settings
-  ];
-
-  const chat = model.startChat({
-    generationConfig,
-    safetySettings,
-    history: [
-      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-      { role: "model", parts: [{ text: " entendido." }] },
-      ...formatRemoteConversationHistory(conversationHistory),
-    ],
   });
+  if (response.text === undefined) {
+    throw new Error("No response text");
+  }
 
-  const result = await chat.sendMessage(userPrompt);
-  return result.response.text();
+  return response.text;
 }

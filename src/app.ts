@@ -192,9 +192,9 @@ function setup(): void {
             return;
           }
           const conversationHistory = messages.slice(0, -1);
-          const remoteSession = initializeRemoteSession(apiKey);
+          const ai = initializeRemoteSession(apiKey);
           code = await generateRemoteResponse(
-            remoteSession,
+            ai,
             text,
             conversationHistory,
           );

@@ -142,7 +142,7 @@ export async function initializeSession(
   });
 
   // Format few-shot examples
-  let formattedExamples = formatFewShotExamples(relevantSamples);
+  const formattedExamples = formatFewShotExamples(relevantSamples);
 
   // Format conversation history (previous user/system pairs)
   // Start with fewer history pairs and adjust based on examples size
