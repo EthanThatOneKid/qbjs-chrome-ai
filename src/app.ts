@@ -109,6 +109,14 @@ function setup(): void {
     updateOriginTrialMetaTag(savedToken);
   }
 
+  // Show/hide trial token link based on whether token is set
+  const trialTokenNotice = document.getElementById("trial-token-notice") as
+    | HTMLElement
+    | null;
+  if (trialTokenNotice) {
+    trialTokenNotice.style.display = savedToken ? "none" : "block";
+  }
+
   let messages = loadMessages();
   
   // Create callback that updates messages and re-renders suggestions
@@ -268,6 +276,13 @@ function setup(): void {
       if (updated) {
         saveToken(updated);
         updateOriginTrialMetaTag(updated);
+        // Hide the trial token link since token is now set
+        const trialTokenNotice = document.getElementById(
+          "trial-token-notice",
+        ) as HTMLElement | null;
+        if (trialTokenNotice) {
+          trialTokenNotice.style.display = "none";
+        }
         alert(
           "Trial token updated. Please reload the page for changes to take effect.",
         );
@@ -275,6 +290,13 @@ function setup(): void {
         // User cleared the token
         saveToken("");
         updateOriginTrialMetaTag(null);
+        // Show the trial token link since token was removed
+        const trialTokenNotice = document.getElementById(
+          "trial-token-notice",
+        ) as HTMLElement | null;
+        if (trialTokenNotice) {
+          trialTokenNotice.style.display = "block";
+        }
         alert(
           "Trial token removed. Please reload the page for changes to take effect.",
         );

@@ -225,6 +225,19 @@
       #suggestions-container:empty {
         display: none;
       }
+      #trial-token-notice {
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+      #trial-token-notice a {
+        color: rgba(0, 120, 212, 0.9);
+        text-decoration: underline;
+        font-size: 0.875rem;
+      }
+      #trial-token-notice a:hover {
+        color: rgba(0, 120, 212, 1);
+        text-decoration: underline;
+      }
       .suggestion-button {
         padding: 0.75rem 1rem;
         border: 0.5px solid var(--border-color);
@@ -346,6 +359,16 @@
         <label for="input">Your message</label>
         <div id="suggestions-container"></div>
         <textarea id="input" name="message" rows="3" required></textarea>
+        <div id="trial-token-notice" style="display: none;">
+          <a
+            id="trial-token-link"
+            href="https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Claim your origin trial token
+          </a>
+        </div>
         <div class="row">
           <button id="send" type="submit">Send</button>
           <button id="change-token" type="button">Change token</button>
