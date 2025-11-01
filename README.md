@@ -24,6 +24,11 @@ Download few-shot examples:
 deno task download
 ```
 
+## Reference
+
+- [Google Chrome Built-in AI Challenge 2025](https://googlechromeai2025.devpost.com/)
+- [QBJS Tutorial video by SchoolFreeware](https://youtu.be/qWBCI62FlBE)
+
 ---
 
 Created with 🤖 for
