@@ -1,5 +1,6 @@
 import "./language-model.d.ts";
-import type { FewShotSample } from "./types.ts";
+import type { FewShotSample, ChatMessage } from "./types.ts";
+import { retrieveRelevantExamples } from "./retrieval.ts";
 
 // System prompt to guide QBJS code generation
 export const SYSTEM_PROMPT =
@@ -62,12 +63,7 @@ function formatFewShotExamples(
 ): Array<{ role: string; content: string }> {
   const examples: Array<{ role: string; content: string }> = [];
 
-  // Limit to a reasonable number of examples to stay within token limits
-  // Using up to 12 examples based on the few-shot.ts script default
-  const maxExamples = Math.min(12, samples.length);
-
-  for (let i = 0; i < maxExamples; i++) {
-    const sample = samples[i];
+  for (const sample of samples) {
     if (!sample?.input || !sample?.output) continue;
 
     // Add user message
@@ -86,14 +82,41 @@ function formatFewShotExamples(
   return examples;
 }
 
-// Session management
-let session: LanguageModelSession | null = null;
+// Convert conversation history to initialPrompts format
+function formatConversationHistory(
+  messages: ChatMessage[],
+): Array<{ role: string; content: string }> {
+  const history: Array<{ role: string; content: string }> = [];
 
-export async function initializeSession(): Promise<LanguageModelSession> {
-  if (session) {
-    return session;
+  // Extract user/system pairs from conversation history
+  // Skip error messages and only include user/system pairs
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (msg.role === "user") {
+      history.push({
+        role: "user",
+        content: msg.text,
+      });
+      // Look ahead for the corresponding system response
+      if (i + 1 < messages.length && messages[i + 1].role === "system") {
+        history.push({
+          role: "model",
+          content: JSON.stringify({ code: messages[i + 1].text }),
+        });
+        i++; // Skip the system message we just added
+      }
+    }
   }
 
+  return history;
+}
+
+// Session management - no longer cached, create new session per request
+export async function initializeSession(
+  userPrompt: string,
+  conversationHistory: ChatMessage[] = [],
+  maxExamples: number = 12,
+): Promise<LanguageModelSession> {
   // Check availability
   const availability = await LanguageModel.availability();
   if (availability === "unavailable") {
@@ -102,21 +125,38 @@ export async function initializeSession(): Promise<LanguageModelSession> {
     );
   }
 
-  // Load few-shot samples and format them as initial prompts
-  const samples = await loadFewShotSamples();
-  const fewShotExamples = formatFewShotExamples(samples);
+  // Load all few-shot samples
+  const allSamples = await loadFewShotSamples();
 
-  // Create initial prompts array: system prompt + few-shot examples
+  // Retrieve relevant examples based on user prompt
+  const relevantSamples = retrieveRelevantExamples(
+    userPrompt,
+    allSamples,
+    maxExamples,
+  );
+
+  // Format few-shot examples
+  const fewShotExamples = formatFewShotExamples(relevantSamples);
+
+  // Format conversation history (previous user/system pairs)
+  const historyPrompts = formatConversationHistory(conversationHistory);
+
+  // Create initial prompts array:
+  // 1. System prompt
+  // 2. Few-shot examples (from retrieval)
+  // 3. Conversation history (user/system pairs)
+  // Note: Current user prompt is added via prompt() call, not in initialPrompts
   const initialPrompts: Array<{ role: string; content: string }> = [
     {
       role: "system",
       content: SYSTEM_PROMPT,
     },
     ...fewShotExamples,
+    ...historyPrompts,
   ];
 
-  // Create session with system prompt and few-shot examples
-  session = await LanguageModel.create({
+  // Create new session with system prompt, few-shot examples, and conversation history
+  const session = await LanguageModel.create({
     initialPrompts,
     monitor(m) {
       m.addEventListener("downloadprogress", (e: { progress?: number }) => {
@@ -132,7 +172,12 @@ export async function initializeSession(): Promise<LanguageModelSession> {
   return session;
 }
 
-export function destroySession(): Promise<void> {
+// Note: Since we create sessions per request, this function is now
+// mainly for cleanup when needed. Sessions should be destroyed
+// after use if memory is a concern.
+export async function destroySession(
+  session: LanguageModelSession | null,
+): Promise<void> {
   if (session) {
     return session.destroy().catch(() => {
       // Ignore cleanup errors

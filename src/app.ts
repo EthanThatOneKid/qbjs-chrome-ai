@@ -63,15 +63,25 @@ function setup(): void {
           code = SYSTEM_REPLY_CODE;
         } else {
           // Real API mode
-          const currentSession = await initializeSession();
-          const response = await currentSession.prompt(text, {
-            responseConstraint: codeResponseSchema,
-          });
-          const parsed = JSON.parse(response);
-          if (typeof parsed.code !== "string") {
-            throw new Error("Invalid response format: missing code field");
+          // Pass conversation history excluding the current user message we just added
+          const conversationHistory = messages.slice(0, -1);
+          const currentSession = await initializeSession(
+            text,
+            conversationHistory,
+          );
+          try {
+            const response = await currentSession.prompt(text, {
+              responseConstraint: codeResponseSchema,
+            });
+            const parsed = JSON.parse(response);
+            if (typeof parsed.code !== "string") {
+              throw new Error("Invalid response format: missing code field");
+            }
+            code = parsed.code;
+          } finally {
+            // Clean up session after use since we create new sessions per request
+            await destroySession(currentSession);
           }
-          code = parsed.code;
         }
 
         const systemMsg: ChatMessage = {
@@ -173,11 +183,12 @@ function setup(): void {
 
 document.addEventListener("DOMContentLoaded", setup);
 
-// Clean up session on page unload
+// Note: Sessions are now created per request and cleaned up immediately after use.
+// These cleanup handlers are kept for any edge cases but are no longer critical.
 globalThis.addEventListener("beforeunload", () => {
-  destroySession();
+  // Sessions are cleaned up per request, so no global session to destroy
 });
 
 globalThis.addEventListener("pagehide", () => {
-  destroySession();
+  // Sessions are cleaned up per request, so no global session to destroy
 });
