@@ -1,6 +1,8 @@
 # ChatQBJS
 
-ChatQBJS is a conversational AI agent user interface for qbjs.org.
+ChatQBJS is a conversational AI agent for [qbjs.org](https://qbjs.org/). QBJS is
+a web-based BASIC implementation with QBasic/[QB64](https://qb64.com/)
+compatibility, multimedia support, and easy program sharing.
 
 ## Develop
 
