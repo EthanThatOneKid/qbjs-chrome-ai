@@ -2,7 +2,7 @@
 
 import { parse } from "@std/csv/parse";
 import { ProgressBar } from "@std/cli/unstable-progress-bar";
-import type { FewShotSample } from "./src/program.ts";
+import type { FewShotSample } from "./src/types.ts";
 
 if (import.meta.main) {
   await downloadSamples();

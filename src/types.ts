@@ -4,3 +4,8 @@ export interface ChatMessage {
   text: string;
   ts: number;
 }
+
+export interface FewShotSample {
+  input: string;
+  output: string;
+}

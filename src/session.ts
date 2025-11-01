@@ -1,5 +1,5 @@
 import "./language-model.d.ts";
-import type { FewShotSample } from "./program.ts";
+import type { FewShotSample } from "./types.ts";
 
 // System prompt to guide QBJS code generation
 export const SYSTEM_PROMPT =
