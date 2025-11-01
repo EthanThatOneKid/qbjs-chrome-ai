@@ -35,7 +35,7 @@ async function downloadSamples(
       `https://raw.githubusercontent.com/boxgaming/qbjs-samples/refs/heads/main/samples/${sample.filename}`,
     );
     const output = await response.text();
-    if (output.length > (Math.min(maxOutputLength, samples.length))) {
+    if (output.length >= maxOutputLength) {
       continue;
     }
 
@@ -43,8 +43,8 @@ async function downloadSamples(
       continue;
     }
 
-    const input = sample.description || sample.label;
-    const fewShotSample: FewShotSample = { input, output };
+    const description = sample.description || sample.label;
+    const fewShotSample: FewShotSample = { description, code: output };
     fewShot.push(fewShotSample);
 
     bar.value++;

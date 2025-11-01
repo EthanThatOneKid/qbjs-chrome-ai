@@ -1,13 +1,22 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/assert@*": "1.0.15",
+    "jsr:@std/assert@^1.0.15": "1.0.15",
     "jsr:@std/cli@^1.0.23": "1.0.23",
     "jsr:@std/csv@^1.0.6": "1.0.6",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/streams@^1.0.9": "1.0.13",
+    "npm:@orama/orama@^3.1.16": "3.1.16",
     "npm:lzutf8@~0.6.3": "0.6.3"
   },
   "jsr": {
+    "@std/assert@1.0.15": {
+      "integrity": "d64018e951dbdfab9777335ecdb000c0b4e3df036984083be219ce5941e4703b",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
     "@std/cli@1.0.23": {
       "integrity": "bf95b7a9425ba2af1ae5a6359daf58c508f2decf711a76ed2993cd352498ccca",
       "dependencies": [
@@ -28,6 +37,9 @@
     }
   },
   "npm": {
+    "@orama/orama@3.1.16": {
+      "integrity": "sha512-scSmQBD8eANlMUOglxHrN1JdSW8tDghsPuS83otqealBiIeMukCQMOf/wc0JJjDXomqwNdEQFLXLGHrU6PGxuA=="
+    },
     "abort-controller@3.0.0": {
       "integrity": "sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==",
       "dependencies": [
@@ -84,8 +96,10 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@std/assert@^1.0.15",
       "jsr:@std/cli@^1.0.23",
       "jsr:@std/csv@^1.0.6",
+      "npm:@orama/orama@^3.1.16",
       "npm:lzutf8@~0.6.3"
     ]
   }

@@ -6,6 +6,6 @@ export interface ChatMessage {
 }
 
 export interface FewShotSample {
-  input: string;
-  output: string;
+  description: string;
+  code: string;
 }

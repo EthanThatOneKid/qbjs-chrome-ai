@@ -22,9 +22,12 @@ declare global {
   }
 
   interface LanguageModel {
-    availability(): Promise<"available" | "unavailable" | "readily">;
+    availability(options?: {
+      outputLanguage?: "en" | "es" | "ja";
+    }): Promise<"available" | "unavailable" | "readily">;
     create(options?: {
       initialPrompts?: Array<{ role: string; content: string }>;
+      outputLanguage?: "en" | "es" | "ja";
       monitor?: (model: {
         addEventListener: (
           type: string,
