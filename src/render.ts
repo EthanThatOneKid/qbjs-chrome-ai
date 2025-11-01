@@ -8,27 +8,31 @@ export function renderMessage(
 ): void {
   li.setAttribute("data-role", message.role);
   if (message.role === "loading") {
+    li.style.display = "flex";
+    li.style.justifyContent = "space-between";
+    li.style.alignItems = "center";
+    li.style.width = "100%";
+
+    const leftContainer = document.createElement("span");
+    leftContainer.style.display = "flex";
+    leftContainer.style.alignItems = "center";
+    leftContainer.style.gap = "0.625rem";
+
     const spinner = document.createElement("span");
     spinner.className = "spinner";
     spinner.setAttribute("aria-hidden", "true");
-    li.appendChild(spinner);
-
-    const textContainer = document.createElement("span");
-    textContainer.style.display = "flex";
-    textContainer.style.justifyContent = "center";
-    textContainer.style.alignItems = "center";
-    textContainer.style.gap = "0.5rem";
-    textContainer.style.width = "100%";
+    spinner.style.marginRight = "0";
+    leftContainer.appendChild(spinner);
 
     const text = document.createTextNode("Thinking...");
-    textContainer.appendChild(text);
+    leftContainer.appendChild(text);
+
+    li.appendChild(leftContainer);
 
     const timeSpan = document.createElement("span");
     timeSpan.style.opacity = "0.7";
     timeSpan.className = "loading-time";
-    textContainer.appendChild(timeSpan);
-
-    li.appendChild(textContainer);
+    li.appendChild(timeSpan);
   } else if ((message as ChatMessage).role === "error") {
     li.textContent = `Error: ${(message as ChatMessage).text}`;
   } else if ((message as ChatMessage).role === "system") {

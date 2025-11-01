@@ -6,31 +6,26 @@
     <title>ChatQBJS</title>
     <style>
       :root {
-        color-scheme: light dark;
-        --border-color: rgba(128, 128, 128, 0.15);
-        --border-color-strong: rgba(128, 128, 128, 0.25);
-        --user-msg-bg: rgba(0, 120, 212, 0.08);
-        --loading-bg: rgba(128, 128, 128, 0.08);
-        --spinner-border: rgba(128, 128, 128, 0.2);
-        --spinner-active: rgba(128, 128, 128, 0.6);
+        color-scheme: dark;
+        /* IDE Color Scheme - Deep dark blue/indigo */
+        --ide-bg: #1a1f3a; /* Deep dark blue/indigo background */
+        --ide-bg-darker: #141829; /* Slightly darker for depth */
+        --ide-border: rgba(255, 255, 255, 0.15); /* Light gray borders */
+        --ide-border-strong: rgba(255, 255, 255, 0.25);
+        --ide-text: #ffffff; /* Bright white text */
+        --ide-text-dim: rgba(255, 255, 255, 0.7);
+        --ide-number: #ff4444; /* Bright red for numbers */
+        --ide-accent: #3b82f6; /* Bright blue accent */
+        --user-msg-bg: rgba(59, 130, 246, 0.12);
+        --loading-bg: rgba(255, 255, 255, 0.08);
+        --spinner-border: rgba(255, 255, 255, 0.2);
+        --spinner-active: rgba(255, 255, 255, 0.8);
         --shadow-subtle:
-          0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+          0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
         --shadow-elevated:
-          0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06);
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --border-color: rgba(255, 255, 255, 0.12);
-          --border-color-strong: rgba(255, 255, 255, 0.18);
-          --user-msg-bg: rgba(0, 120, 212, 0.18);
-          --loading-bg: rgba(255, 255, 255, 0.06);
-          --spinner-border: rgba(255, 255, 255, 0.2);
-          --spinner-active: rgba(255, 255, 255, 0.6);
-          --shadow-subtle:
-            0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-          --shadow-elevated:
-            0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
+          0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+        --border-color: var(--ide-border);
+        --border-color-strong: var(--ide-border-strong);
       }
       * {
         box-sizing: border-box;
@@ -43,8 +38,8 @@
         padding: 1rem;
         height: 100vh;
         overflow: hidden;
-        background: canvas;
-        color: canvastext;
+        background: var(--ide-bg);
+        color: var(--ide-text);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         display: flex;
@@ -58,6 +53,7 @@
         letter-spacing: -0.025em;
         line-height: 1.2;
         flex-shrink: 0;
+        color: var(--ide-text);
       }
       #app {
         max-width: 720px;
@@ -80,14 +76,30 @@
         min-height: 0;
         overflow-y: auto;
         overflow-x: hidden;
-        border: 0.5px solid var(--border-color);
+        border: 1px solid var(--ide-border);
         border-radius: 20px;
         padding: 1.25rem;
         list-style: none;
         margin: 0;
-        background: canvas;
+        background: var(--ide-bg-darker);
         box-shadow: var(--shadow-subtle);
-        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      #messages:empty::before {
+        content: "Try a suggested message above or type your own!";
+        color: var(--ide-text-dim);
+        opacity: 0.6;
+        font-size: 1rem;
+        text-align: center;
+        padding: 2rem;
+        font-style: italic;
+      }
+      #messages:not(:empty) {
+        justify-content: flex-start;
+        align-items: stretch;
       }
       #messages:focus {
         outline: 1px solid rgba(0, 120, 212, 0.4);
@@ -107,7 +119,8 @@
         margin-right: 0;
         word-wrap: break-word;
         line-height: 1.6;
-        border: 0.5px solid var(--border-color);
+        border: 1px solid var(--ide-border);
+        color: var(--ide-text);
       }
       #messages li[data-role="system"] {
         background: transparent;
@@ -116,6 +129,8 @@
         overflow: hidden;
         position: relative;
         max-width: 640px;
+        display: flex;
+        flex-direction: column;
       }
       #messages li[data-role="system"] .iframe-wrapper {
         width: 100%;
@@ -142,19 +157,13 @@
       #messages li[data-role="loading"] {
         background: var(--loading-bg);
         padding: 1rem 1.25rem;
-        border: 0.5px solid var(--border-color);
+        border: 1px solid var(--ide-border);
+        color: var(--ide-text);
       }
       #messages li[data-role="error"] {
-        background: rgba(255, 0, 0, 0.08);
-        color: rgb(204, 0, 0);
-        border: 0.5px solid rgba(255, 0, 0, 0.2);
-      }
-      @media (prefers-color-scheme: dark) {
-        #messages li[data-role="error"] {
-          background: rgba(255, 0, 0, 0.15);
-          color: rgb(255, 100, 100);
-          border-color: rgba(255, 0, 0, 0.3);
-        }
+        background: rgba(255, 68, 68, 0.15);
+        color: var(--ide-number);
+        border: 1px solid rgba(255, 68, 68, 0.3);
       }
       .spinner {
         display: inline-block;
@@ -182,7 +191,7 @@
       textarea {
         width: 100%;
         padding: 0.875rem 1rem;
-        border: 0.5px solid var(--border-color);
+        border: 1px solid var(--ide-border);
         border-radius: 10px;
         font-family: inherit;
         font-size: 0.9375rem;
@@ -190,15 +199,15 @@
         resize: vertical;
         min-height: 88px;
         max-height: 200px;
-        background: canvas;
-        color: canvastext;
+        background: var(--ide-bg-darker);
+        color: var(--ide-text);
         transition: border-color 0.25s ease-out, box-shadow 0.25s ease-out;
         box-shadow: var(--shadow-subtle);
       }
       textarea:focus {
         outline: none;
-        border-color: rgba(0, 120, 212, 0.4);
-        box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.08), var(--shadow-subtle);
+        border-color: var(--ide-accent);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), var(--shadow-subtle);
       }
       form {
         width: 100%;
@@ -214,6 +223,7 @@
         font-size: 0.9375rem;
         margin-bottom: 0.375rem;
         letter-spacing: -0.01em;
+        color: var(--ide-text);
       }
       #suggestions-container {
         display: grid;
@@ -230,23 +240,23 @@
         text-align: center;
       }
       #trial-token-notice a {
-        color: rgba(0, 120, 212, 0.9);
+        color: var(--ide-accent);
         text-decoration: underline;
         font-size: 0.875rem;
       }
       #trial-token-notice a:hover {
-        color: rgba(0, 120, 212, 1);
+        color: #60a5fa;
         text-decoration: underline;
       }
       .suggestion-button {
         padding: 0.75rem 1rem;
-        border: 0.5px solid var(--border-color);
+        border: 1px solid var(--ide-border);
         border-radius: 10px;
         font-family: inherit;
         font-size: 0.875rem;
         font-weight: 400;
-        background: rgba(128, 128, 128, 0.05);
-        color: canvastext;
+        background: var(--ide-bg-darker);
+        color: var(--ide-text);
         cursor: pointer;
         transition: all 0.25s ease-out;
         text-align: left;
@@ -256,8 +266,8 @@
         white-space: normal;
       }
       .suggestion-button:hover {
-        background: rgba(128, 128, 128, 0.12);
-        border-color: var(--border-color-strong);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--ide-border-strong);
         transform: translateY(-1px);
         box-shadow: var(--shadow-elevated);
       }
@@ -266,13 +276,13 @@
       }
       button {
         padding: 0.6875rem 1.125rem;
-        border: 0.5px solid var(--border-color);
+        border: 1px solid var(--ide-border);
         border-radius: 10px;
         font-family: inherit;
         font-size: 0.9375rem;
         font-weight: 500;
-        background: canvas;
-        color: canvastext;
+        background: var(--ide-bg-darker);
+        color: var(--ide-text);
         cursor: pointer;
         transition: all 0.25s ease-out;
         white-space: nowrap;
@@ -280,8 +290,8 @@
         box-shadow: var(--shadow-subtle);
       }
       button:hover {
-        background: rgba(128, 128, 128, 0.08);
-        border-color: var(--border-color-strong);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--ide-border-strong);
         transform: translateY(-1px);
         box-shadow: var(--shadow-elevated);
       }
@@ -289,54 +299,209 @@
         transform: translateY(0) scale(0.98);
       }
       button#send {
-        background: rgba(0, 120, 212, 0.95);
+        background: var(--ide-accent);
         color: white;
-        border-color: rgba(0, 120, 212, 0.95);
-        box-shadow: 0 2px 8px rgba(0, 120, 212, 0.25), var(--shadow-subtle);
+        border-color: var(--ide-accent);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3), var(--shadow-subtle);
       }
       button#send:hover {
-        background: rgba(0, 120, 212, 1);
-        border-color: rgba(0, 120, 212, 1);
+        background: #2563eb;
+        border-color: #2563eb;
         box-shadow:
-          0 4px 12px rgba(0, 120, 212, 0.35),
+          0 4px 12px rgba(59, 130, 246, 0.4),
           var(--shadow-elevated);
         transform: translateY(-1px);
       }
-      @media (prefers-color-scheme: dark) {
-        button#send {
-          background: rgba(0, 140, 232, 0.95);
-          border-color: rgba(0, 140, 232, 0.95);
-          box-shadow: 0 2px 8px rgba(0, 140, 232, 0.3), var(--shadow-subtle);
-        }
-        button#send:hover {
-          background: rgba(0, 140, 232, 1);
-          border-color: rgba(0, 140, 232, 1);
-          box-shadow:
-            0 4px 12px rgba(0, 140, 232, 0.4),
-            var(--shadow-elevated);
-        }
+      button#clear-messages {
+        margin-left: auto;
       }
       #messages li[data-role="system"] a {
-        display: inline-block;
+        display: block;
         margin-top: 0.875rem;
         padding: 0.5625rem 0.875rem;
-        background: rgba(128, 128, 128, 0.06);
-        border: 0.5px solid var(--border-color);
+        background: var(--ide-bg-darker);
+        border: 1px solid var(--ide-border);
         border-radius: 10px;
         text-decoration: none;
-        color: inherit;
+        color: var(--ide-text);
         font-size: 0.875rem;
         transition: all 0.25s ease-out;
         font-weight: 500;
         letter-spacing: -0.01em;
         box-shadow: var(--shadow-subtle);
+        width: fit-content;
+        align-self: flex-start;
       }
       #messages li[data-role="system"] a:hover {
-        background: rgba(128, 128, 128, 0.12);
-        border-color: var(--border-color-strong);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--ide-border-strong);
         transform: translateY(-1px);
         box-shadow: var(--shadow-elevated);
         text-decoration: none;
+      }
+      dialog {
+        margin: auto;
+        padding: 0;
+        border: none;
+        border-radius: 24px;
+        background: transparent;
+        max-width: 540px;
+        width: 90%;
+        max-height: 90vh;
+        overflow: hidden;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.6),
+          0 8px 24px rgba(0, 0, 0, 0.4),
+          0 0 0 1px var(--ide-border);
+        animation: dialogSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        animation: backdropFadeIn 0.3s ease-out;
+      }
+      @keyframes dialogSlideIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95) translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      @keyframes backdropFadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      #settings-form {
+        background: var(--ide-bg);
+        padding: 2rem;
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+        overflow-y: auto;
+        max-height: 90vh;
+        border: 1px solid var(--ide-border);
+      }
+      #settings-form h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--ide-text);
+        line-height: 1.2;
+      }
+      #settings-form label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+        color: var(--ide-text);
+        opacity: 0.8;
+      }
+      #settings-form select,
+      #settings-form input[type="password"],
+      #settings-form input[type="text"] {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 1px solid var(--ide-border);
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 0.9375rem;
+        background: var(--ide-bg-darker);
+        color: var(--ide-text);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-subtle);
+      }
+      #settings-form select {
+        appearance: none;
+        background: var(--ide-bg-darker)
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E")
+          no-repeat right 1rem center;
+        padding-right: 2.5rem;
+      }
+      #settings-form input[type="password"]:focus,
+      #settings-form input[type="text"]:focus {
+        outline: none;
+        border-color: var(--ide-accent);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), var(--shadow-elevated);
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+      #settings-form select:focus {
+        outline: none;
+        border-color: var(--ide-accent);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2), var(--shadow-elevated);
+        background: rgba(255, 255, 255, 0.1)
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E")
+          no-repeat right 1rem center;
+        transform: translateY(-1px);
+      }
+      #settings-form #trial-token-notice {
+        margin-top: 0.25rem;
+        margin-bottom: 0;
+        text-align: left;
+        padding: 1rem;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 12px;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      #settings-form #trial-token-notice a {
+        color: var(--ide-accent);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.2s ease-out;
+        display: inline-block;
+      }
+      #settings-form #trial-token-notice a:hover {
+        color: #60a5fa;
+        text-decoration: underline;
+        transform: translateX(2px);
+      }
+      #settings-form .row {
+        margin-top: 0.5rem;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+      #settings-form button {
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 12px;
+        min-width: 100px;
+        letter-spacing: -0.01em;
+      }
+      #settings-form button[type="submit"] {
+        background: var(--ide-accent);
+        color: white;
+        border: none;
+        box-shadow:
+          0 4px 12px rgba(59, 130, 246, 0.3),
+          var(--shadow-elevated);
+      }
+      #settings-form button[type="submit"]:hover {
+        background: #2563eb;
+        box-shadow:
+          0 6px 16px rgba(59, 130, 246, 0.4),
+          var(--shadow-elevated);
+        transform: translateY(-2px);
+      }
+      #settings-form button[type="button"] {
+        background: var(--ide-bg-darker);
+        border: 1px solid var(--ide-border);
+        color: var(--ide-text);
+      }
+      #settings-form button[type="button"]:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--ide-border-strong);
       }
     </style>
   </head>
@@ -359,22 +524,12 @@
         <label for="input">Your message</label>
         <div id="suggestions-container"></div>
         <textarea id="input" name="message" rows="3" required></textarea>
-        <div id="trial-token-notice" style="display: none">
-          <a
-            id="trial-token-link"
-            href="https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Claim your origin trial token
-          </a>
-        </div>
         <div class="row">
           <button id="send" type="submit">Send</button>
+          <button id="settings-btn" type="button">Settings</button>
           <button id="clear-messages" type="button" disabled>
             Clear messages
           </button>
-          <button id="settings-btn" type="button">Settings</button>
         </div>
       </form>
     </main>
@@ -383,13 +538,30 @@
         <h2>Settings</h2>
         <label for="model-select">AI Model</label>
         <select id="model-select" name="model">
-          <option value="local">Local</option>
-          <option value="remote">Remote</option>
+          <option value="local">Gemini Nano</option>
+          <option value="remote">Gemini 2.5 Flash</option>
         </select>
-        <label for="api-key-input">API Key</label>
+        <label for="api-key-input">API Key (Gemini 2.5 Flash)</label>
         <input type="password" id="api-key-input" name="apiKey">
-        <label for="token-input">Origin Trial Token</label>
+        <label for="token-input">Origin Trial Token (Gemini Nano)</label>
         <input type="password" id="token-input" name="token">
+        <div id="trial-token-notice">
+          <a
+            id="trial-token-link"
+            href="https://developer.chrome.com/origintrials/#/view_trial/2533837740349325313"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Claim your origin trial token
+          </a>
+          or <a
+            href="https://aistudio.google.com/api-keys"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            get your API key
+          </a>
+        </div>
         <div class="row">
           <button type="submit">Save</button>
           <button type="button" id="close-dialog-btn">Close</button>

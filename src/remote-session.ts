@@ -12,7 +12,7 @@ import { SYSTEM_PROMPT } from "./session.ts";
 // Function to initialize the remote session with the API key
 export function initializeRemoteSession(apiKey: string) {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   return model;
 }
 
