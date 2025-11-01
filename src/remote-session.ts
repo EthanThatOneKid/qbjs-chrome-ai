@@ -1,10 +1,10 @@
 import {
+  GenerationConfig,
   GenerativeModel,
   GoogleGenerativeAI,
-  GenerationConfig,
-  SafetySetting,
-  HarmCategory,
   HarmBlockThreshold,
+  HarmCategory,
+  SafetySetting,
 } from "@google/genai";
 import type { ChatMessage } from "./types.ts";
 import { SYSTEM_PROMPT } from "./session.ts";

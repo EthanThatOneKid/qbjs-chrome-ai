@@ -12,22 +12,22 @@ export function renderMessage(
     spinner.className = "spinner";
     spinner.setAttribute("aria-hidden", "true");
     li.appendChild(spinner);
-    
+
     const textContainer = document.createElement("span");
     textContainer.style.display = "flex";
     textContainer.style.justifyContent = "center";
     textContainer.style.alignItems = "center";
     textContainer.style.gap = "0.5rem";
     textContainer.style.width = "100%";
-    
+
     const text = document.createTextNode("Thinking...");
     textContainer.appendChild(text);
-    
+
     const timeSpan = document.createElement("span");
     timeSpan.style.opacity = "0.7";
     timeSpan.className = "loading-time";
     textContainer.appendChild(timeSpan);
-    
+
     li.appendChild(textContainer);
   } else if ((message as ChatMessage).role === "error") {
     li.textContent = `Error: ${(message as ChatMessage).text}`;

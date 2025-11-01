@@ -140,13 +140,13 @@ function setup(): void {
   }
 
   let messages = loadMessages();
-  
+
   // Create callback that updates messages and re-renders suggestions
   const handleSampleSelect = (sample: FewShotSample) => {
     messages = addSampleToHistory(sample, messages);
     renderSuggestions(messages, handleSampleSelect);
   };
-  
+
   render(messages);
   renderSuggestions(messages, handleSampleSelect);
 
@@ -304,9 +304,15 @@ function setup(): void {
 
   if (settingsBtn && settingsDialog && settingsForm) {
     settingsBtn.addEventListener("click", () => {
-      const modelSelect = settingsForm.elements.namedItem("model") as HTMLSelectElement;
-      const apiKeyInput = settingsForm.elements.namedItem("apiKey") as HTMLInputElement;
-      const tokenInput = settingsForm.elements.namedItem("token") as HTMLInputElement;
+      const modelSelect = settingsForm.elements.namedItem(
+        "model",
+      ) as HTMLSelectElement;
+      const apiKeyInput = settingsForm.elements.namedItem(
+        "apiKey",
+      ) as HTMLInputElement;
+      const tokenInput = settingsForm.elements.namedItem(
+        "token",
+      ) as HTMLInputElement;
 
       modelSelect.value = getModelPreference();
       apiKeyInput.value = getApiKey() || "";
